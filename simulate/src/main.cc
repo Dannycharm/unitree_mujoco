@@ -35,6 +35,7 @@
 #include "unitree_sdk2_bridge.h"
 #include "sensor_publisher.h"
 #include "dex3_handler.h"
+#include "startup_pose.h"
 #include "grasp_weld.h"
 #include "param.h"
 
@@ -348,7 +349,10 @@ namespace
 
         mjData *dnew = nullptr;
         if (mnew)
+        {
           dnew = mj_makeData(mnew);
+          grove_g1::ApplyStartupPose(mnew, dnew);
+        }
         if (dnew)
         {
           sim.Load(mnew, dnew, sim.dropfilename);
@@ -384,7 +388,10 @@ namespace
         mjModel *mnew = LoadModel(sim.filename, sim);
         mjData *dnew = nullptr;
         if (mnew)
+        {
           dnew = mj_makeData(mnew);
+          grove_g1::ApplyStartupPose(mnew, dnew);
+        }
         if (dnew)
         {
           sim.Load(mnew, dnew, sim.filename);
@@ -559,7 +566,10 @@ void PhysicsThread(mj::Simulate *sim, const char *filename)
     sim->LoadMessage(filename);
     m = LoadModel(filename, *sim);
     if (m)
+    {
       d = mj_makeData(m);
+      grove_g1::ApplyStartupPose(m, d);
+    }
     if (d)
     {
       sim->Load(m, d, filename);
