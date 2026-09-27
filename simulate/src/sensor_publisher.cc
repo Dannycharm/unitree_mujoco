@@ -473,6 +473,11 @@ void sensorLoop(const Config cfg, mjModel** model, mjData** data, std::recursive
         if (!camera.enabled) {
             continue;
         }
+        if (camera.name.size() >= sizeof(SensorFrameHeader::camera)) {
+            std::fprintf(stderr, "[grove_g1] camera '%s' exceeds %zu chars; DISABLED\n",
+                         camera.name.c_str(), sizeof(SensorFrameHeader::camera) - 1);
+            continue;
+        }
         CameraRig rig;
         rig.name    = camera.name;
         rig.cam_id  = mj_name2id(m, mjOBJ_CAMERA, camera.mjcf.c_str());
@@ -487,9 +492,11 @@ void sensorLoop(const Config cfg, mjModel** model, mjData** data, std::recursive
         std::memcpy(rig.xyz, camera.xyz, sizeof(rig.xyz));
         rpyToMatrix(camera.rpy, rig.R_mount);
         // The MJCF camera's own resolution, so a camera's size is declared where its fovy is.
-        rig.width  = m->cam_resolution[2 * rig.cam_id] > 0 ? m->cam_resolution[2 * rig.cam_id] : 848;
-        rig.height =
-            m->cam_resolution[2 * rig.cam_id + 1] > 0 ? m->cam_resolution[2 * rig.cam_id + 1] : 480;
+        // MuJoCo compiles a camera with none to 1x1, which would render a blind camera.
+        const int* size = m->cam_resolution + 2 * rig.cam_id;
+        const bool sized = size[0] > 1 && size[1] > 1;
+        rig.width        = sized ? size[0] : 848;
+        rig.height       = sized ? size[1] : 480;
         rigs.push_back(std::move(rig));
     }
 

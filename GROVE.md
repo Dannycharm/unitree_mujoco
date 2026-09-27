@@ -21,6 +21,7 @@ one.
 | Give the Dex3 palm and fingers contact geometry | Grasps by contact rather than by a weld. |
 | Apply a scene's startup hold angles at load | `startup_pose.cc` spawns a scene's postures before the first step. |
 | Stamp each camera frame with its own instant | A depth frame carries the sim time its camera pose was copied at, not the earlier LiDAR sweep's. |
+| Refuse cameras the relay cannot use | A camera name too long for the frame header is disabled loudly, and an MJCF camera with no resolution renders at 848x480 rather than MuJoCo's 1x1. |
 
 ## Rules
 
