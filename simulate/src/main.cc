@@ -35,6 +35,7 @@
 #include "unitree_sdk2_bridge.h"
 #include "sensor_publisher.h"
 #include "dex3_handler.h"
+#include "grasp_weld.h"
 #include "param.h"
 
 #define MUJOCO_PLUGIN_DIR "mujoco_plugin"
@@ -356,6 +357,7 @@ namespace
           // outside sim.mtx by design, so nothing lock-based can make this safe.
           grove_g1::StopSensorPublisher();
           grove_g1::StopDex3Handler();
+          grove_g1::StopGraspWeld();
 
           mj_deleteData(d);
           mj_deleteModel(m);
@@ -391,6 +393,7 @@ namespace
           // outside sim.mtx by design, so nothing lock-based can make this safe.
           grove_g1::StopSensorPublisher();
           grove_g1::StopDex3Handler();
+          grove_g1::StopGraspWeld();
 
           mj_deleteData(d);
           mj_deleteModel(m);
@@ -705,6 +708,12 @@ int main(int argc, char **argv)
   // GROVE_G1_SENSOR_CONFIG is set. Loads no ROS and no DDS: unitree_sdk2 already
   // owns the CycloneDDS domain in this process. Frames go to g1_sensor_relay.
   grove_g1::StartSensorPublisher(&m, &d, &sim->mtx);
+
+  // grove-g1: SIMULATION-ONLY grasp weld, standing in for the finger contact the model
+  // deliberately does not have. Off unless GROVE_G1_SENSOR_CONFIG enables it, and a no-op
+  // in a scene that declares no grasp_* welds. Needs sim->mtx rather than DDS, so it starts
+  // here rather than in the bridge thread.
+  grove_g1::StartGraspWeld(&m, &d, &sim->mtx);
 
   // start physics thread
   std::thread physicsthreadhandle(&PhysicsThread, sim.get(), param::config.robot_scene.c_str());
