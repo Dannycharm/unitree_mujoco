@@ -20,6 +20,7 @@ one.
 | Hold the robot until the control stack drives the motors | Each motor holds its spawn angle until its first command. |
 | Give the Dex3 palm and fingers contact geometry | Grasps by contact rather than by a weld. |
 | Apply a scene's startup hold angles at load | `startup_pose.cc` spawns a scene's postures before the first step. |
+| Stamp each camera frame with its own instant | A depth frame carries the sim time its camera pose was copied at, not the earlier LiDAR sweep's. |
 
 ## Rules
 

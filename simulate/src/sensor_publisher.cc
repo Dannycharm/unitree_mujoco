@@ -747,6 +747,8 @@ void sensorLoop(const Config cfg, mjModel** model, mjData** data, std::recursive
         if (cam_win != nullptr && !rigs.empty() && !reload_pending) {
             // Transform arrays only, never mj_copyData; see the sweep snapshot above.
             const auto cam_t0 = std::chrono::steady_clock::now();
+            // The cameras' own instant: the sweep's is a raycast earlier.
+            double cam_time = sim_time;
             {
                 std::lock_guard<std::recursive_mutex> lock(*sim_mtx);
                 // Re-checked: the lock was released since the sweep, and a reload in between
@@ -756,6 +758,7 @@ void sensorLoop(const Config cfg, mjModel** model, mjData** data, std::recursive
                 }
                 const mjData* live = reload_pending ? nullptr : *data;
                 if (live != nullptr) {
+                cam_time = live->time;
                 std::memcpy(snapshot->xpos, live->xpos, sizeof(mjtNum) * 3 * m->nbody);
                 std::memcpy(snapshot->xquat, live->xquat, sizeof(mjtNum) * 4 * m->nbody);
                 std::memcpy(snapshot->xmat, live->xmat, sizeof(mjtNum) * 9 * m->nbody);
@@ -857,7 +860,7 @@ void sensorLoop(const Config cfg, mjModel** model, mjData** data, std::recursive
                 const std::size_t rgb_bytes   = rig.rgb.size();
                 dh.payload_bytes = static_cast<uint32_t>(depth_bytes + rgb_bytes);
                 dh.rgb_bytes     = static_cast<uint32_t>(rgb_bytes);
-                dh.sim_time_s    = sim_time;
+                dh.sim_time_s    = cam_time;
                 std::memcpy(dh.sensor_pos, cam_pos, sizeof(cam_pos));
                 matrixToQuat(R_body, dh.sensor_quat);
                 dh.width    = static_cast<uint32_t>(w);
