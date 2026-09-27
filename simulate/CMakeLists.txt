@@ -42,6 +42,6 @@ link_libraries(
   fmt
 )
 
-add_executable(unitree_mujoco ${SIM_SRC} src/main.cc src/sensor_publisher.cc)
+add_executable(unitree_mujoco ${SIM_SRC} src/main.cc src/sensor_publisher.cc src/dex3_handler.cc)
 
 add_executable(jstest src/joystick/jstest.cc src/joystick/joystick.cc)

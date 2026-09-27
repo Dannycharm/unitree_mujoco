@@ -34,6 +34,7 @@
 #include "array_safety.h"
 #include "unitree_sdk2_bridge.h"
 #include "sensor_publisher.h"
+#include "dex3_handler.h"
 #include "param.h"
 
 #define MUJOCO_PLUGIN_DIR "mujoco_plugin"
@@ -354,6 +355,7 @@ namespace
           // Blocking join before the model is freed. The sampler touches the model
           // outside sim.mtx by design, so nothing lock-based can make this safe.
           grove_g1::StopSensorPublisher();
+          grove_g1::StopDex3Handler();
 
           mj_deleteData(d);
           mj_deleteModel(m);
@@ -388,6 +390,7 @@ namespace
           // Blocking join before the model is freed. The sampler touches the model
           // outside sim.mtx by design, so nothing lock-based can make this safe.
           grove_g1::StopSensorPublisher();
+          grove_g1::StopDex3Handler();
 
           mj_deleteData(d);
           mj_deleteModel(m);
@@ -609,6 +612,10 @@ void *UnitreeSdk2BridgeThread(void *arg)
     interface = std::make_unique<Go2Bridge>(m, d);
   }
   interface->start();
+
+  // grove-g1: the Dex3 hands. Here and not in main() because it opens DDS channels, so it
+  // has to run after ChannelFactory::Init above. A no-op on models without finger joints.
+  grove_g1::StartDex3Handler(&m, &d);
   
   while (true)
   {
