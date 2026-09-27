@@ -33,6 +33,7 @@
 #include "simulate.h"
 #include "array_safety.h"
 #include "unitree_sdk2_bridge.h"
+#include "sensor_publisher.h"
 #include "param.h"
 
 #define MUJOCO_PLUGIN_DIR "mujoco_plugin"
@@ -350,6 +351,10 @@ namespace
         {
           sim.Load(mnew, dnew, sim.dropfilename);
 
+          // Blocking join before the model is freed. The sampler touches the model
+          // outside sim.mtx by design, so nothing lock-based can make this safe.
+          grove_g1::StopSensorPublisher();
+
           mj_deleteData(d);
           mj_deleteModel(m);
 
@@ -379,6 +384,10 @@ namespace
         if (dnew)
         {
           sim.Load(mnew, dnew, sim.filename);
+
+          // Blocking join before the model is freed. The sampler touches the model
+          // outside sim.mtx by design, so nothing lock-based can make this safe.
+          grove_g1::StopSensorPublisher();
 
           mj_deleteData(d);
           mj_deleteModel(m);
@@ -684,6 +693,11 @@ int main(int argc, char **argv)
     &cam, &opt, &pert, /* is_passive = */ false);
 
   std::thread unitree_thread(UnitreeSdk2BridgeThread, nullptr);
+
+  // grove-g1: sensor thread for the converged perception track. A no-op unless
+  // GROVE_G1_SENSOR_CONFIG is set. Loads no ROS and no DDS: unitree_sdk2 already
+  // owns the CycloneDDS domain in this process. Frames go to g1_sensor_relay.
+  grove_g1::StartSensorPublisher(&m, &d, &sim->mtx);
 
   // start physics thread
   std::thread physicsthreadhandle(&PhysicsThread, sim.get(), param::config.robot_scene.c_str());
