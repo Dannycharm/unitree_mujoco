@@ -37,6 +37,7 @@
 #include "dex3_handler.h"
 #include "startup_pose.h"
 #include "grasp_weld.h"
+#include "pedestrian_playback.h"
 #include "param.h"
 
 #define MUJOCO_PLUGIN_DIR "mujoco_plugin"
@@ -438,6 +439,7 @@ namespace
         // run only if model is present
         if (m)
         {
+          grove_g1::UpdatePedestrians(m, d, true);  // sim.mtx held; actor lifecycle only
           // running
           if (sim.run)
           {
@@ -485,6 +487,7 @@ namespace
 
               // run single step, let next iteration deal with timing
               mj_step(m, d);
+              grove_g1::UpdatePedestrians(m, d, false);
               stepped = true;
             }
 
@@ -526,6 +529,7 @@ namespace
 
                 // call mj_step
                 mj_step(m, d);
+                grove_g1::UpdatePedestrians(m, d, false);
                 stepped = true;
 
                 // break if reset
